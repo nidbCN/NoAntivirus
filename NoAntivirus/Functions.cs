@@ -4,6 +4,7 @@ using System;
 using System.IO;
 using System.Management;
 using System.Text.Json;
+using CommandDotNet;
 using NoAntivirus.Models;
 
 namespace NoAntivirus
@@ -12,7 +13,8 @@ namespace NoAntivirus
     {
         private static readonly string BackupPath = Path.Combine(Environment.CurrentDirectory, "backup.json");
 
-        public static bool OpenNoAntivirus(bool backup)
+        [Command(Description = "On the NoAntivirus, we will backup your anti-virus programs.")]
+        public bool On(bool backup = true)
         {
             var programs = new AntivirusPrograms();
 
@@ -27,19 +29,28 @@ namespace NoAntivirus
 
             return
                 programs.RemoveAll(it =>
-               it.GetPropertyValue("displayName").ToString() != "Windows Defender"
-            )
+                    it.GetPropertyValue("displayName").ToString() != "Windows Defender"
+                )
                 &&
                 programs.Add(new AntivirusProgram() { Guid = new Guid(), Name = "NoAntivirus" });
         }
 
-        public static bool RestoreAntivirus()
+        [Command(Description = "Off the NoAntivirus, if your have back up, we will restore it.")]
+        public bool Off()
         {
-            if (!File.Exists(BackupPath)) return false;
+            var programs = new AntivirusPrograms();
+
+            if (!File.Exists(BackupPath))
+            {
+                programs.RemoveAll(it => 
+                    it.GetPropertyValue("displayName").ToString() == "NoAntivirus"
+                );
+            }
 
             var json = File.ReadAllText(BackupPath);
             var collection = JsonSerializer.Deserialize<ManagementObjectCollection>(json);
 
+            return programs.Add(collection);
         }
     }
 }

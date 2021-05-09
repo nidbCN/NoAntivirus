@@ -10,7 +10,7 @@ namespace NoAntivirus
     {
         public AntivirusPrograms()
         {
-            _searcher = new ManagementObjectSearcher(_wmiPath, "SELECT * FROM AntivirusProduct;");
+            _searcher = new ManagementObjectSearcher(_wmiPath, "SELECT * FROM AntivirusProduct");
         }
 
         private readonly string _wmiPath = @$"\\{Environment.MachineName}\root\SecurityCenter:AntiVirusProduct";
@@ -25,6 +25,7 @@ namespace NoAntivirus
         public bool Add(AntivirusProgram program)
         {
             var manClass = new ManagementClass(_wmiPath);
+
             var obj = manClass.CreateInstance();
 
             if (obj == null) return false;
@@ -37,6 +38,27 @@ namespace NoAntivirus
             obj.Put();
 
             return true;
+        }
+
+        public bool Add(ManagementObjectCollection collection)
+        {
+            throw new NotImplementedException();
+
+            var result = true;
+
+            foreach (var item in collection)
+            {
+                if (item is ManagementObject obj)
+                {
+                    obj.Put();
+                }
+                else
+                {
+                    result = false;
+                }
+            }
+
+            return result;
         }
 
         public bool RemoveAll(Func<ManagementBaseObject, bool> providerAction)
